@@ -111,6 +111,7 @@ void totp_scene_generate_token_render(Canvas* const canvas, PluginState* plugin_
         furi_hal_crypto_store_unload_key(CRYPTO_KEY_SLOT);
 
         i_token_to_str(totp_get_code_from_timestamp(key, tokenInfo->token_length, curr_ts), scene_state->last_code);
+        memset(key, 0, tokenInfo->token_length);
         free(key);
 
         if (is_new_token_time) {

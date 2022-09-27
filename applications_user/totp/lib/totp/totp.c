@@ -1,7 +1,7 @@
 #include "totp.h"
 #include "sha1.h"
 
-uint32_t _timeZoneOffset;
+int _timeZoneOffset;
 uint32_t _timeStep;
 
 // Init the library with the private key, its length and the timeStep duration
@@ -10,7 +10,7 @@ void totp_setup(uint32_t timeStep) {
 }
 
 void totp_set_timezone(float timezone){
-    _timeZoneOffset = (uint32_t)(timezone * 3600.0f);
+    _timeZoneOffset = (int)(timezone * 3600.0f);
 }
 
 // Generate a code, using the number of steps provided

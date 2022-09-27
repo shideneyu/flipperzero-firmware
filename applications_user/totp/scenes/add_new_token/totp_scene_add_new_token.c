@@ -149,6 +149,7 @@ bool totp_scene_add_new_token_handle_event(PluginEvent* const event, PluginState
                                 tokenInfo->token_length = tokenInfo->token_length - remain + 16;
                                 uint8_t* plain_secret_aligned = malloc(tokenInfo->token_length);
                                 memcpy(plain_secret_aligned, plain_secret, plain_secret_length);
+                                memset(plain_secret, 0, plain_secret_length);
                                 free(plain_secret);
                                 plain_secret = plain_secret_aligned;
                             }
@@ -159,6 +160,7 @@ bool totp_scene_add_new_token_handle_event(PluginEvent* const event, PluginState
                             furi_hal_crypto_encrypt(plain_secret, tokenInfo->token, tokenInfo->token_length);
                             furi_hal_crypto_store_unload_key(CRYPTO_KEY_SLOT);
 
+                            memset(plain_secret, 0, tokenInfo->token_length);
                             free(plain_secret);
                             
                             if (plugin_state->tokens_list == NULL) {
