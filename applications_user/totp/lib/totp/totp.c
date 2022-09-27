@@ -55,7 +55,13 @@ uint32_t time_struct_to_timestamp(struct tm time){
 
 // Generate a code, using the timestamp provided
 uint32_t totp_get_code_from_timestamp(uint8_t* hmacKey, uint8_t keyLength, uint32_t timeStamp) {
-    uint32_t steps = (timeStamp - _timeZoneOffset) / _timeStep;
+    uint32_t steps;
+    if (_timeZoneOffset >= 0) {
+        steps = (timeStamp - _timeZoneOffset) / _timeStep;
+    } else {
+        steps = (timeStamp + (-_timeZoneOffset)) / _timeStep;
+    }
+    
     return totp_get_code_from_steps(hmacKey, keyLength, steps);
 }
 
