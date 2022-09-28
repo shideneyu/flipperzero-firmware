@@ -37,7 +37,7 @@ static void input_callback(InputEvent* input_event, FuriMessageQueue* event_queu
 static void totp_state_init(PluginState* const plugin_state) {
     plugin_state->gui = furi_record_open(RECORD_GUI);
     plugin_state->notification = furi_record_open(RECORD_NOTIFICATION);
-    totp_full_load_config_file(plugin_state);
+    totp_config_file_load_base(plugin_state);
 
     totp_scene_director_init_scenes(plugin_state);
     totp_scene_director_activate_scene(plugin_state, TotpSceneAuthentication, NULL);

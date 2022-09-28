@@ -10,5 +10,6 @@ typedef struct {
 } TokenInfo;
 
 void token_info_free(TokenInfo* token_info);
+void token_info_set_secret(TokenInfo* token_info, const char* base32_token_secret, uint8_t token_secret_length, uint8_t* iv);
 
 #endif

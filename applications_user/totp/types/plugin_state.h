@@ -15,6 +15,7 @@ typedef struct {
 
     float timezone_offset;
     ListNode* tokens_list;
+    bool token_list_loaded;
     uint8_t tokens_count;
 
     uint8_t* crypto_verify_data;

@@ -16,6 +16,7 @@ void totp_close_storage();
 FlipperFormat* totp_open_config_file(Storage* storage);
 void totp_close_config_file(FlipperFormat* file);
 void totp_full_save_config_file(PluginState* const plugin_state);
-void totp_full_load_config_file(PluginState* const plugin_state);
+void totp_config_file_load_base(PluginState* const plugin_state);
+void totp_config_file_load_tokens(PluginState* const plugin_state);
 
 #endif

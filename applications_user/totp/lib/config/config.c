@@ -1,4 +1,5 @@
 #include "config.h"
+#include <stdlib.h>
 #include "../../types/common.h"
 #include "../../types/token_info.h"
 
@@ -64,7 +65,7 @@ void totp_full_save_config_file(PluginState* const plugin_state) {
     totp_close_storage();
 }
 
-void totp_full_load_config_file(PluginState* const plugin_state) {
+void totp_config_file_load_base(PluginState* const plugin_state) {
     Storage* storage = totp_open_storage();
     FlipperFormat* fff_data_file = totp_open_config_file(storage);
 
@@ -103,9 +104,26 @@ void totp_full_load_config_file(PluginState* const plugin_state) {
         FURI_LOG_D(LOGGING_TAG, "Missing timezone offset information, defaulting to 0");
     }
 
-    flipper_format_rewind(fff_data_file);
+    string_clear(temp_str);
+    totp_close_config_file(fff_data_file);
+    totp_close_storage();
+}
+
+void totp_config_file_load_tokens(PluginState* const plugin_state) {
+    Storage* storage = totp_open_storage();
+    FlipperFormat* fff_data_file = totp_open_config_file(storage);
+
+    string_t temp_str;
+    uint32_t temp_data32;
+    string_init(temp_str);
+
+    if(!flipper_format_read_header(fff_data_file, temp_str, &temp_data32)) {
+        FURI_LOG_E(LOGGING_TAG, "Missing or incorrect header");
+        return;
+    }
 
     uint8_t index = 0;
+    bool has_any_plain_secret = false;
     while (true) {
         if (!flipper_format_read_string(fff_data_file, TOTP_CONFIG_KEY_TOKEN_NAME, temp_str)) {
             break;
@@ -119,13 +137,24 @@ void totp_full_load_config_file(PluginState* const plugin_state) {
 
         uint32_t secret_bytes_count;
         if (!flipper_format_get_value_count(fff_data_file, TOTP_CONFIG_KEY_TOKEN_SECRET, &secret_bytes_count)) {
-            break;
+            continue;
         }
 
-        tokenInfo->token_length = secret_bytes_count;
-        tokenInfo->token = malloc(tokenInfo->token_length);
-        if (!flipper_format_read_hex(fff_data_file, TOTP_CONFIG_KEY_TOKEN_SECRET, tokenInfo->token, tokenInfo->token_length)) {
-            break;
+        if (secret_bytes_count == 1) { // Plain secret key
+            if (!flipper_format_read_string(fff_data_file, TOTP_CONFIG_KEY_TOKEN_SECRET, temp_str)) {
+                continue;
+            }
+
+            temp_cstr = string_get_cstr(temp_str);
+            token_info_set_secret(tokenInfo, temp_cstr, strlen(temp_cstr), &plugin_state->iv[0]);
+            has_any_plain_secret = true;
+            FURI_LOG_W(LOGGING_TAG, "Found token with plain secret");
+        } else { // encrypted
+            tokenInfo->token_length = secret_bytes_count;
+            tokenInfo->token = malloc(tokenInfo->token_length);
+            if (!flipper_format_read_hex(fff_data_file, TOTP_CONFIG_KEY_TOKEN_SECRET, tokenInfo->token, tokenInfo->token_length)) {
+                continue;
+            }
         }
 
         FURI_LOG_D(LOGGING_TAG, "Found token \"%s\"", tokenInfo->name);
@@ -140,12 +169,17 @@ void totp_full_load_config_file(PluginState* const plugin_state) {
     }
 
     plugin_state->tokens_count = index;
+    plugin_state->token_list_loaded = true;
 
     FURI_LOG_D(LOGGING_TAG, "Found %d tokens", index);
 
     string_clear(temp_str);
     totp_close_config_file(fff_data_file);
     totp_close_storage();
+
+    if (has_any_plain_secret) {
+        totp_full_save_config_file(plugin_state);
+    }
 }
 
 void totp_close_config_file(FlipperFormat* file) {

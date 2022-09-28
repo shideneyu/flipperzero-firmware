@@ -140,28 +140,8 @@ bool totp_scene_add_new_token_handle_event(PluginEvent* const event, PluginState
                             TokenInfo* tokenInfo = malloc(sizeof(TokenInfo));
                             tokenInfo->name = malloc(scene_state->token_name_length + 1);
                             strcpy(tokenInfo->name, scene_state->token_name);
-                            uint8_t* plain_secret = malloc(scene_state->token_secret_length);
-                            int plain_secret_length = base32_decode((uint8_t *)scene_state->token_secret, plain_secret, scene_state->token_secret_length);
-                            tokenInfo->token_length = plain_secret_length;
 
-                            size_t remain = tokenInfo->token_length % 16;
-                            if(remain) {
-                                tokenInfo->token_length = tokenInfo->token_length - remain + 16;
-                                uint8_t* plain_secret_aligned = malloc(tokenInfo->token_length);
-                                memcpy(plain_secret_aligned, plain_secret, plain_secret_length);
-                                memset(plain_secret, 0, plain_secret_length);
-                                free(plain_secret);
-                                plain_secret = plain_secret_aligned;
-                            }
-
-                            tokenInfo->token = malloc(tokenInfo->token_length);
-                            
-                            furi_hal_crypto_store_load_key(CRYPTO_KEY_SLOT, &plugin_state->iv[0]);
-                            furi_hal_crypto_encrypt(plain_secret, tokenInfo->token, tokenInfo->token_length);
-                            furi_hal_crypto_store_unload_key(CRYPTO_KEY_SLOT);
-
-                            memset(plain_secret, 0, tokenInfo->token_length);
-                            free(plain_secret);
+                            token_info_set_secret(tokenInfo, scene_state->token_secret, scene_state->token_secret_length, &plugin_state->iv[0]);
                             
                             if (plugin_state->tokens_list == NULL) {
                                 plugin_state->tokens_list = list_init_head(tokenInfo);

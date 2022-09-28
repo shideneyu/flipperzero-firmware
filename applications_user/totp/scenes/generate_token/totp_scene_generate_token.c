@@ -8,6 +8,7 @@
 #include "../../lib/ui/canvas_extensions.h"
 #include "../../lib/ui/constants.h"
 #include "../../lib/totp/totp.h"
+#include "../../lib/config/config.h"
 #include "../scene_director.h"
 #include "../token_menu/totp_scene_token_menu.h"
 
@@ -53,8 +54,6 @@ static void i_token_to_str(uint32_t i_token_code, char* str) {
 
 void update_totp_params(PluginState* const plugin_state) {
     SceneState* scene_state = (SceneState *)plugin_state->current_scene_state;
-    totp_set_timezone(plugin_state->timezone_offset);
-    FURI_LOG_D(LOGGING_TAG, "Timezone set to: %f", (double)plugin_state->timezone_offset);
 
     if (scene_state->current_token_index < plugin_state->tokens_count) {
         TokenInfo* tokenInfo = (TokenInfo*)(list_element_at(plugin_state->tokens_list, scene_state->current_token_index)->data);
@@ -70,6 +69,9 @@ void totp_scene_generate_token_init(PluginState* plugin_state) {
 }
 
 void totp_scene_generate_token_activate(PluginState* plugin_state, const GenerateTokenSceneContext* context) {
+    if (!plugin_state->token_list_loaded) {
+        totp_config_file_load_tokens(plugin_state);
+    }
     SceneState* scene_state = malloc(sizeof(SceneState));
     if (context == NULL) {
         scene_state->current_token_index = 0;
@@ -78,6 +80,8 @@ void totp_scene_generate_token_activate(PluginState* plugin_state, const Generat
     }
     scene_state->need_token_update = true;
     plugin_state->current_scene_state = scene_state;
+    totp_set_timezone(plugin_state->timezone_offset);
+    FURI_LOG_D(LOGGING_TAG, "Timezone set to: %f", (double)plugin_state->timezone_offset);
     update_totp_params(plugin_state);
 }
 
