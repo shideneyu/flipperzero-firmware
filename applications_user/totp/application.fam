@@ -23,3 +23,19 @@ App(
     requires=["totp"],
     order=30,
 )
+
+
+App(
+    appid="totp",
+    name="TOTP",
+    apptype=FlipperAppType.APP,
+    entry_point="totp_app",
+    cdefines=["APP_TOTP"],
+        "gui",
+        "cli",
+        "dialogs"
+    ],
+    stack_size=2 * 1024,
+    icon="A_TOTP_14",
+    order=80,
+)
